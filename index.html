@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-  <title>Pong Vertical Azul</title>
+  <title>KiwiPong</title>
   <style>
     :root{
       --bg1:#0a1f44; /* azul profundo */
@@ -69,15 +69,15 @@
         <div class="overlay" id="overlay">
           <div class="card">
             <div class="title">Pong Vertical Azul</div>
-            <div class="subtitle">Arrastra tu pulgar <b>izquierda ↔ derecha</b> para mover tu paleta. Vence a la IA en la parte superior. 
-              Fondo con brillo, físicas suaves y dificultad progresiva.</div>
+            <div class="subtitle">Drag your finger <b>left ↔ right</b> for moving your padle. Beat Grey. Win the one that wins 7 points.
+              The ball will get faster as the point progresses.</div>
             <div class="cta">
-              <button class="btn" id="startBtn">▶️ Jugar</button>
-              <button class="btn" id="howBtn">❓ Cómo jugar</button>
+              <button class="btn" id="startBtn">▶️ Play</button>
+              <button class="btn" id="howBtn">❓ How to play</button>
             </div>
           </div>
         </div>
-        <div class="touchbar"><div class="hint">Consejo: mantén el pulgar en la mitad inferior para mejor control.</div></div>
+        <div class="touchbar"><div class="hint">Tip: Mantain your finger in the middle. </div></div>
       </div>
     </div>
   </div>
@@ -143,7 +143,7 @@
       if(!animId){ lastTime=performance.now(); animId = requestAnimationFrame(loop); }
       if(navigator.vibrate) navigator.vibrate(10);
     }
-    function pause(){ state.paused = !state.paused; pauseBtn.textContent = state.paused? '▶️ Reanudar':'⏸︎ Pausa'; }
+    function pause(){ state.paused = !state.paused; pauseBtn.textContent = state.paused? '▶️ Continue':'⏸︎ Pause'; }
     function reset(){ state.playerScore=0; state.aiScore=0; state.level=1; scoreEl.textContent = `0 — 0`; resetPositions(); trailAlpha=0.22; }
 
     // --- Touch Controls ---
@@ -163,7 +163,7 @@
     // UI Buttons
     startBtn.addEventListener('click', ()=>{ reset(); start(); });
     howBtn.addEventListener('click', ()=>{
-      alert('Arrastra tu pulgar izquierda ↔ derecha en la mitad inferior para mover tu paleta. Gana a 7 puntos.');
+      alert('Drag your finger left ↔ right on the bottom half to move your paddle. Win by 7 points.');
     });
     pauseBtn.addEventListener('click', ()=>{ if(state.running) pause(); });
     resetBtn.addEventListener('click', ()=>{ reset(); if(!state.running){ start(); } });
