@@ -52,7 +52,7 @@
     /* Prevent text selection during fast drags */
     .board, .btn, .hint { -webkit-user-select:none; -ms-user-select:none; user-select:none; }
 
-    /* === ADICIÓN: mejora control táctil en móviles (evita scroll/zoom mientras arrastras) === */
+    /* ADICIÓN: evita scroll/zoom durante el arrastre táctil */
     .board, .board canvas { touch-action: none; }
   </style>
 </head>
@@ -149,9 +149,30 @@
     function pause(){ state.paused = !state.paused; pauseBtn.textContent = state.paused? '▶️ Continue':'⏸︎ Pause'; }
     function reset(){ state.playerScore=0; state.aiScore=0; state.level=1; scoreEl.textContent = `0 — 0`; resetPositions(); trailAlpha=0.22; }
 
+    /* === ADICIÓN: ignorar eventos cuando tocas UI/overlay para no romper el click === */
+    function isUIEvent(e){
+      const t = e.target;
+      if (!t) return false;
+      // Si el overlay está visible y el toque ocurre dentro, dejamos que los botones funcionen
+      if (getComputedStyle(overlay).display !== 'none' && overlay.contains(t)) return true;
+      // O cualquier control interactivo
+      return !!(t.closest && t.closest('.btn, a, input, select, textarea'));
+    }
+
     // --- Touch Controls ---
-    function onTouchStart(e){ dragging=true; const t = e.touches[0]; touchX = t.clientX - board.getBoundingClientRect().left; e.preventDefault(); }
-    function onTouchMove(e){ if(!dragging) return; const t = e.touches[0]; touchX = t.clientX - board.getBoundingClientRect().left; e.preventDefault(); }
+    function onTouchStart(e){
+      if (isUIEvent(e)) return;             // <-- ADICIÓN
+      dragging=true;
+      const t = e.touches[0];
+      touchX = t.clientX - board.getBoundingClientRect().left;
+      e.preventDefault();
+    }
+    function onTouchMove(e){
+      if (!dragging || isUIEvent(e)) return; // <-- ADICIÓN
+      const t = e.touches[0];
+      touchX = t.clientX - board.getBoundingClientRect().left;
+      e.preventDefault();
+    }
     function onTouchEnd(){ dragging=false; touchX=null; }
 
     board.addEventListener('touchstart', onTouchStart, {passive:false});
@@ -330,21 +351,21 @@
     // For orientation changes
     window.addEventListener('orientationchange', ()=>{ setTimeout(()=>{ fit(); resetPositions(); }, 200); });
 
-    /* === ADICIÓN: soporte Pointer Events para control suave en móviles modernos === */
+    /* ADICIÓN: soporte Pointer Events en móviles, sin bloquear clicks de la UI */
     if (window.PointerEvent) {
       board.addEventListener('pointerdown', (e) => {
-        if (e.pointerType === 'touch' || e.pointerType === 'pen') {
-          dragging = true;
-          const rect = board.getBoundingClientRect();
-          touchX = e.clientX - rect.left;
-          // captura para no perder el control si el dedo sale del canvas
-          try { board.setPointerCapture(e.pointerId); } catch {}
-          e.preventDefault();
-        }
+        if (!(e.pointerType === 'touch' || e.pointerType === 'pen')) return;
+        if (isUIEvent(e)) return;                 // <-- ADICIÓN
+        dragging = true;
+        const rect = board.getBoundingClientRect();
+        touchX = e.clientX - rect.left;
+        try { board.setPointerCapture(e.pointerId); } catch {}
+        e.preventDefault();
       }, { passive: false });
 
       board.addEventListener('pointermove', (e) => {
         if (!dragging) return;
+        if (isUIEvent(e)) return;                 // <-- ADICIÓN
         const rect = board.getBoundingClientRect();
         touchX = e.clientX - rect.left;
         e.preventDefault();
