@@ -51,6 +51,9 @@
 
     /* Prevent text selection during fast drags */
     .board, .btn, .hint { -webkit-user-select:none; -ms-user-select:none; user-select:none; }
+
+    /* === ADICIÓN: mejora control táctil en móviles (evita scroll/zoom mientras arrastras) === */
+    .board, .board canvas { touch-action: none; }
   </style>
 </head>
 <body>
@@ -326,6 +329,35 @@
 
     // For orientation changes
     window.addEventListener('orientationchange', ()=>{ setTimeout(()=>{ fit(); resetPositions(); }, 200); });
+
+    /* === ADICIÓN: soporte Pointer Events para control suave en móviles modernos === */
+    if (window.PointerEvent) {
+      board.addEventListener('pointerdown', (e) => {
+        if (e.pointerType === 'touch' || e.pointerType === 'pen') {
+          dragging = true;
+          const rect = board.getBoundingClientRect();
+          touchX = e.clientX - rect.left;
+          // captura para no perder el control si el dedo sale del canvas
+          try { board.setPointerCapture(e.pointerId); } catch {}
+          e.preventDefault();
+        }
+      }, { passive: false });
+
+      board.addEventListener('pointermove', (e) => {
+        if (!dragging) return;
+        const rect = board.getBoundingClientRect();
+        touchX = e.clientX - rect.left;
+        e.preventDefault();
+      }, { passive: false });
+
+      const stopPointer = (e) => {
+        dragging = false; touchX = null;
+        try { if (e && e.pointerId != null) board.releasePointerCapture(e.pointerId); } catch {}
+      };
+      board.addEventListener('pointerup', stopPointer);
+      board.addEventListener('pointercancel', stopPointer);
+      board.addEventListener('lostpointercapture', stopPointer);
+    }
 
   })();
   </script>
