@@ -52,7 +52,7 @@
     /* Prevent text selection during fast drags */
     .board, .btn, .hint { -webkit-user-select:none; -ms-user-select:none; user-select:none; }
 
-    /* ADICIÓN: evita scroll/zoom durante el arrastre táctil */
+    /* ADICIÓN previa: evita scroll/zoom durante el arrastre táctil */
     .board, .board canvas { touch-action: none; }
   </style>
 </head>
@@ -149,30 +149,17 @@
     function pause(){ state.paused = !state.paused; pauseBtn.textContent = state.paused? '▶️ Continue':'⏸︎ Pause'; }
     function reset(){ state.playerScore=0; state.aiScore=0; state.level=1; scoreEl.textContent = `0 — 0`; resetPositions(); trailAlpha=0.22; }
 
-    /* === ADICIÓN: ignorar eventos cuando tocas UI/overlay para no romper el click === */
+    /* === ADICIÓN previa: ignorar eventos al tocar UI/overlay === */
     function isUIEvent(e){
       const t = e.target;
       if (!t) return false;
-      // Si el overlay está visible y el toque ocurre dentro, dejamos que los botones funcionen
       if (getComputedStyle(overlay).display !== 'none' && overlay.contains(t)) return true;
-      // O cualquier control interactivo
       return !!(t.closest && t.closest('.btn, a, input, select, textarea'));
     }
 
     // --- Touch Controls ---
-    function onTouchStart(e){
-      if (isUIEvent(e)) return;             // <-- ADICIÓN
-      dragging=true;
-      const t = e.touches[0];
-      touchX = t.clientX - board.getBoundingClientRect().left;
-      e.preventDefault();
-    }
-    function onTouchMove(e){
-      if (!dragging || isUIEvent(e)) return; // <-- ADICIÓN
-      const t = e.touches[0];
-      touchX = t.clientX - board.getBoundingClientRect().left;
-      e.preventDefault();
-    }
+    function onTouchStart(e){ if (isUIEvent(e)) return; dragging=true; const t = e.touches[0]; touchX = t.clientX - board.getBoundingClientRect().left; e.preventDefault(); }
+    function onTouchMove(e){ if (!dragging || isUIEvent(e)) return; const t = e.touches[0]; touchX = t.clientX - board.getBoundingClientRect().left; e.preventDefault(); }
     function onTouchEnd(){ dragging=false; touchX=null; }
 
     board.addEventListener('touchstart', onTouchStart, {passive:false});
@@ -186,9 +173,7 @@
 
     // UI Buttons
     startBtn.addEventListener('click', ()=>{ reset(); start(); });
-    howBtn.addEventListener('click', ()=>{
-      alert('Drag your finger left ↔ right on the bottom half to move your paddle. Win by 7 points.');
-    });
+    howBtn.addEventListener('click', ()=>{ alert('Drag your finger left ↔ right on the bottom half to move your paddle. Win by 7 points.'); });
     pauseBtn.addEventListener('click', ()=>{ if(state.running) pause(); });
     resetBtn.addEventListener('click', ()=>{ reset(); if(!state.running){ start(); } });
 
@@ -278,6 +263,11 @@
       state.level = 1 + Math.floor(total/2);
       resetPositions();
       trailAlpha = 0.12; // quick fade between rounds
+
+      /* === ADICIÓN: detener tras cada punto y esperar Play === */
+      awaitingServe = true;
+      state.running = false;
+      overlay.style.display = 'grid';
     }
 
     function ping(){ /* subtle effect */ if(navigator.vibrate) navigator.vibrate(8); }
@@ -351,11 +341,11 @@
     // For orientation changes
     window.addEventListener('orientationchange', ()=>{ setTimeout(()=>{ fit(); resetPositions(); }, 200); });
 
-    /* ADICIÓN: soporte Pointer Events en móviles, sin bloquear clicks de la UI */
+    /* === ADICIÓN: soporte Pointer Events en móviles === */
     if (window.PointerEvent) {
       board.addEventListener('pointerdown', (e) => {
         if (!(e.pointerType === 'touch' || e.pointerType === 'pen')) return;
-        if (isUIEvent(e)) return;                 // <-- ADICIÓN
+        if (isUIEvent(e)) return;
         dragging = true;
         const rect = board.getBoundingClientRect();
         touchX = e.clientX - rect.left;
@@ -365,7 +355,7 @@
 
       board.addEventListener('pointermove', (e) => {
         if (!dragging) return;
-        if (isUIEvent(e)) return;                 // <-- ADICIÓN
+        if (isUIEvent(e)) return;
         const rect = board.getBoundingClientRect();
         touchX = e.clientX - rect.left;
         e.preventDefault();
@@ -379,6 +369,22 @@
       board.addEventListener('pointercancel', stopPointer);
       board.addEventListener('lostpointercapture', stopPointer);
     }
+
+    /* === ADICIÓN: flag de “esperando saque” y captura del click en Play === */
+    let awaitingServe = false;
+
+    // Capturamos el click ANTES que tu listener original (fase capture)
+    startBtn.addEventListener('click', (e) => {
+      if (!awaitingServe) return;              // si no estamos entre puntos, deja que haga reset+start
+      e.preventDefault();
+      e.stopImmediatePropagation();            // evita que se dispare el reset original
+      awaitingServe = false;
+      overlay.style.display = 'none';
+      state.paused = false;
+      state.running = true;
+      if(navigator.vibrate) navigator.vibrate(10);
+      // el loop ya está activo; nextRound() dejó posiciones listas
+    }, { capture: true });
 
   })();
   </script>
