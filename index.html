@@ -54,6 +54,9 @@
 
     /* ADICIÓN previa: evita scroll/zoom durante el arrastre táctil */
     .board, .board canvas { touch-action: none; }
+    /* --- FIX: que el marcador quede encima del juego --- */
+    .statusbar { z-index: 10; }
+    .board     { z-index: 1;  }
   </style>
 </head>
 <body>
