@@ -145,12 +145,12 @@
 
     function start(){
       state.running = true; state.paused=false; overlay.style.display='none';
-      scoreEl.textContent = `${state.playerScore} — ${state.aiScore}`;
+      scoreEl.textContent = `${state.playerScore}  ${state.aiScore}`;
       if(!animId){ lastTime=performance.now(); animId = requestAnimationFrame(loop); }
       if(navigator.vibrate) navigator.vibrate(10);
     }
     function pause(){ state.paused = !state.paused; pauseBtn.textContent = state.paused? '▶️ Continue':'⏸︎ Pause'; }
-    function reset(){ state.playerScore=0; state.aiScore=0; state.level=1; scoreEl.textContent = `0 — 0`; resetPositions(); trailAlpha=0.22; }
+    function reset(){ state.playerScore=0; state.aiScore=0; state.level=1; scoreEl.textContent = `0  0`; resetPositions(); trailAlpha=0.22; }
 
     /* === ADICIÓN previa: ignorar eventos al tocar UI/overlay === */
     function isUIEvent(e){
@@ -250,7 +250,7 @@
     }
 
     function nextRound(playerPoint){
-      scoreEl.textContent = `${state.playerScore} — ${state.aiScore}`;
+      scoreEl.textContent = `${state.playerScore}  ${state.aiScore}`;
       const won = state.playerScore>=7 || state.aiScore>=7;
       if(won){
         state.running=false;
