@@ -255,8 +255,8 @@
       if(won){
         state.running=false;
         overlay.style.display='grid';
-        overlay.querySelector('.title').textContent = state.playerScore>state.aiScore? '🏆 ¡Ganaste!':'😅 Perdiste';
-        overlay.querySelector('.subtitle').innerHTML = `Marcador final <b>${state.playerScore} — ${state.aiScore}</b> · Toca Jugar para intentar de nuevo.`;
+        overlay.querySelector('.title').textContent = state.playerScore>state.aiScore? '🏆 You won!':'😅 Kiwibotchi won';
+        overlay.querySelector('.subtitle').innerHTML = `Final Score <b>${state.playerScore} — ${state.aiScore}</b> · Touch to play again.`;
         if(navigator.vibrate) navigator.vibrate([50,60,50]);
         cancelAnimationFrame(animId); animId=null; return;
       }
